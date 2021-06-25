@@ -7,16 +7,19 @@ const utils = require('./utilities')
 class Warmer {
     constructor(sitemap, settings) {
         this.settings = settings
-
+        this.user_agents = [
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
+        ]
         this.accept_encoding = [];
         this.accept_encoding.br = 'gzip, deflate, br'
-        this.accept_encoding.gzip = 'gzip, deflate'
-        this.accept_encoding.deflate = 'deflate'
+        // this.accept_encoding.gzip = 'gzip, deflate'
+        // this.accept_encoding.deflate = 'deflate'
 
         this.accept = [];
         this.accept.avif = 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
-        this.accept.webp = 'image/webp,image/apng,image/*,*/*;q=0.8'
-        this.accept.default = 'image/apng,image/*,*/*;q=0.8'
+        // this.accept.webp = 'image/webp,image/apng,image/*,*/*;q=0.8'
+        // this.accept.default = 'image/apng,image/*,*/*;q=0.8'
 
         this.sitemap = sitemap
         this.url = this.sitemap.getURL(settings.newer_than)
@@ -58,11 +61,15 @@ class Warmer {
     }
 
     async warmup_site(url) {
-        logger.debug(`🚀 Warming ${url}`)
-        for (const accept_encoding of Object.keys(this.accept_encoding)) {
-            await this.fetch(url, {accept_encoding: this.accept_encoding[accept_encoding]})
-            await this.sleep(this.settings.delay)
+        for (const user_agent of this.user_agents) {
+            for (const accept_encoding of Object.keys(this.accept_encoding)) {
+                await this.fetch(url, {accept_encoding: this.accept_encoding[accept_encoding], user_agent})
+                await this.sleep(this.settings.delay)
+            }
+            // await this.fetch(url, {accept_encoding: this.accept_encoding[accept_encoding]})
+            // await this.sleep(this.settings.delay)
         }
+        
     }
 
     async warmup_image(image_url) {
@@ -73,15 +80,15 @@ class Warmer {
         }
     }
 
-    async fetch(url, {accept = '', accept_encoding = ''}) {
-        logger.debug(`  ⚡️ Warming ${url}`, accept, accept_encoding)
+    async fetch(url, {accept = '', accept_encoding = '', user_agent = ''}) {
+        logger.debug(`🚀 Warming ${url} ${user_agent}`)
         return await fetch(url, {
             "headers": {
                 "accept": accept,
                 "accept-encoding": accept_encoding,
                 "cache-control": "no-cache",
                 "pragma": "no-cache",
-                "user-agent": 'datuan.dev - Cache Warmer (https://github.com/tdtgit/sitemap-warmer)'
+                "user-agent": user_agent
             },
             "body": null,
             "method": "GET",
